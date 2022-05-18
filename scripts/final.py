@@ -107,6 +107,7 @@ class Final:
         drive_to_target(self)
         grip_and_lift(self)
         set_vel(self, 0,0)
+
         return True
 
     def run(self):
