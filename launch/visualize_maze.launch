@@ -21,7 +21,7 @@
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
-          args="-d $(find final-robotics-project)/rviz/particle_filter_project_v2.rviz"/>
+          args="-d $(find final-robotics-project)/rviz/final_project.rviz"/>
   </group>
 
 </launch>
