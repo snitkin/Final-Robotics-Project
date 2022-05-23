@@ -4,12 +4,16 @@ from tkinter import N
 import rospy
 import numpy as np
 import sys
+#print full array
 np.set_printoptions(threshold=sys.maxsize)
+
 import os
 import pandas as pd
 
+from std_msgs.msg import Header, String
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetMap
+from geometry_msgs.msg import Quaternion, Point, Pose, PoseArray, PoseStamped
 from likelihood_field import LikelihoodField
 from sensor_msgs.msg import LaserScan
 
@@ -55,6 +59,9 @@ class Algo(object):
 
         # subscribe to the lidar scan from the robot
         rospy.Subscriber(self.scan_topic, LaserScan, self.robot_scan_received)
+
+        # set up publisher for particles
+        self.path_pub = rospy.Publisher('particle_cloud', PoseArray, queue_size=10)
 
         # inialize our map and likelihood field
         self.map = OccupancyGrid()
@@ -238,6 +245,28 @@ class Algo(object):
             path.insert(0,coord)
             old_x = x
             old_y = y
+        #publish particle cloud
+        self.path = path
+        self.publish_path()
+
+    def publish_path(self):
+        path_pose_array = PoseArray()
+        path_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
+        path_pose_array.poses
+        res = self.map.info.resolution
+        origin_x = self.map.info.origin.position.x
+        origin_y = self.map.info.origin.position.y
+        for coord in self.path:
+            coord_pose = Pose()
+            coord_pose.position.x = -coord[0]*res 
+            coord_pose.position.y = -coord[1]*res
+            path_pose_array.poses.append(coord_pose)
+            print(coord_pose.position)
+        self.path_pub.publish(path_pose_array)
+        print("published")
+        self.path_pub.publish(path_pose_array)
+
+        rospy.spin()
 
 
 
