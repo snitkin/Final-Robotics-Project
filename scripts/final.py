@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper
+from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper, find_and_face_robot
 from movement import set_movement_arm, grip_and_lift, lower, find_and_face_ar, find_and_face_color
 
 import rospy, cv2, cv_bridge, numpy
@@ -82,6 +82,10 @@ class Final:
         else:
             print("intialized")
             self.do_actions()
+            #if one then for the first robot finding second robot
+            #if two then for second robot finding ar tag??
+
+            self.robot_control()
 
     
 
@@ -98,17 +102,57 @@ class Final:
         scan[scan == 0] = 60
         self.scan = scan
 
-
+    #i played with this
     def do_actions(self):
         set_vel(self, 0,0)
-
+        color_options = ["pink","orange"]
+        color_choice = np.random.choice(color_choice)
         while(not self.inFront):
-            find_and_face_color(self, "blue")
-        drive_to_target(self)
-        grip_and_lift(self)
+            if color_choice = "pink"
+                find_and_face_color(self,"pink")
+                drive_to_target(self)
+                grip_and_lift(self)
+                #need hard coded arm values for pink 
+                #my rviz doesnt load so i couldnt get value
+            if color_choice = "orange"
+                find_and_face_color(self,"orange")
+                drive_to_target(self)
+                grip_and_lift(self)
+                #hard coded values for orange 
+                
+                
+ 
         set_vel(self, 0,0)
-
+    
         return True
+
+
+
+
+    #Things we need to decide if 1) we are just gonna have the first robot find the second robot which is at a set position
+    #2)once the first robot starts moving then we have it send a message to the second robot to get into place
+    #3)Im thinking the first robot finds the second robot through color finding we put orange tape on its perimeter
+    #4)How to communicate to the second robot that the first robot is infront and it can execute to pick up baton
+    #5)once it picks up the button are we putting ar tag on? we can brainstorm this one
+    
+    #function for first robot to find second robot and for second robot to grab and go somewhere
+    def robot_control(self,number):
+        #call move_robo2_to_position sometime before
+        if number == 0:
+            find_and_face_robot(self,"orange")
+            drive_to_target(self)
+            lower(self)
+        if number == 1:
+            #lower_robot2_arm(self)
+            grip_and_lift(self)
+            find_and_face_ar(self)
+            lower(self)
+
+
+            
+        
+
+
 
     def run(self):
             rospy.spin()

@@ -3,11 +3,17 @@
 from tkinter import N
 import rospy
 import numpy as np
+import sys
+#print full array
+np.set_printoptions(threshold=sys.maxsize)
+
 import os
 import pandas as pd
 
+from std_msgs.msg import Header, String
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetMap
+from geometry_msgs.msg import Quaternion, Point, Pose, PoseArray, PoseStamped
 from likelihood_field import LikelihoodField
 from sensor_msgs.msg import LaserScan
 
@@ -39,23 +45,23 @@ class Algo(object):
         rospy.init_node("algo")
 
         
-        # test values
-        self.start_x = 4 
-        self.start_y = 6 
-        self.goal_x = 10
-        self.goal_y = 10
-        self.width = 10
-        self.height = 6
+        
         
         #set topic names
         self.map_topic = "map"
         self.scan_topic = "scan"
+
+
+        self.map_initialized = False
 
         # subscribe to the map server
         rospy.Subscriber(self.map_topic, OccupancyGrid, self.get_map)
 
         # subscribe to the lidar scan from the robot
         rospy.Subscriber(self.scan_topic, LaserScan, self.robot_scan_received)
+
+        # set up publisher for particles
+        self.path_pub = rospy.Publisher('particle_cloud', PoseArray, queue_size=10)
 
         # inialize our map and likelihood field
         self.map = OccupancyGrid()
@@ -64,7 +70,16 @@ class Algo(object):
         self.likelihood_field = LikelihoodField()
         print("map and field intialized")
         
+        while not self.map_initialized:
+            i = 1
 
+        # test values
+        self.start_x = 12
+        self.start_y = 12
+        self.goal_x = 70 
+        self.goal_y = 70
+        self.width = self.map.info.width
+        self.height = self.map.info.height
 
         #intialize start node 
         #intialize goal node
@@ -77,6 +92,7 @@ class Algo(object):
     def get_map(self, data):
 
         self.map = data
+        self.map_initialized = True
 
     def robot_scan_received(self, data):
         return
@@ -86,18 +102,23 @@ class Algo(object):
         buffer = .18
         init_node = mapNode
         self.node_values = np.full((self.height,self.width),init_node)
-        for i in range(self.map.info.height):
-            for j in range(self.map.info.width):
+        for i in range(self.height):
+            for j in range(self.width):
                 thisNode = mapNode()
                 #what does this return if pixel is not on occupancy grid
-                dist = self.likelihood_field.get_closest_obstacle_distance(i,j)
+                res = self.map.info.resolution
+                origin_x = self.map.info.origin.position.x
+                origin_y = self.map.info.origin.position.y
+                dist = self.likelihood_field.get_closest_obstacle_distance(
+                    i*res+origin_x,j*res+origin_y)
                 if dist > buffer:
                     thisNode.valid = True
                     #intialize hn with manhattan distance to goal
                     #TODO make sure goal is intialized with x and y
                     thisNode.hn =  (abs(i - self.goal_x) + 
                         abs(j - self.goal_y))          
-                self.node_values[i][j] = mapNode()
+                self.node_values[i][j] = thisNode
+        print(self.node_values[28][40].valid)
         print("node values initialized")
 
     def test_valid(self):
@@ -122,14 +143,17 @@ class Algo(object):
     def set_new_node(self, x, y):
         if x == self.goal_x and y == self.goal_y:
             self.found = True
-        if self.node_values[x][y].valid:
-                
+        if  (x >= len(self.node_values) or y >= len(self.node_values[0])
+                or x < 0 or y < 0):
+            return
+        elif self.node_values[x][y].valid:
+            change = 1
             #calculate values for new node
             new_node = mapNode()
             new_node.parent_i = self.parent_i
             new_node.parent_j = self.parent_j
             #distance from previous parent plus change
-            new_node.gn = self.node_values[parent_i][parent_j].gn + change
+            new_node.gn = self.node_values[self.parent_i][self.parent_j].gn + change
             #distance to goal already calculated (can do calculation here if needed)
             new_node.hn = self.node_values[x][y].hn
             new_node.fn = new_node.hn + new_node.gn
@@ -155,7 +179,7 @@ class Algo(object):
                 self.node_values[self.start_x][self.start_y].hn)
 
         #put the start node in the open list
-        self.open[self.start.y][self.start.j] = True
+        self.open[self.start_x][self.start_y] = True
         self.found = False
 
         #end conditions for a star, found goal or open list empty
@@ -198,6 +222,15 @@ class Algo(object):
             x = parent_i + change
             y = parent_j
             self.set_new_node(x, y)
+        print(self.closed)
+        print(self.open)
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.node_values[i][j].valid:
+                    print("node: " + str(j)+  ", " + str(i))
+                    print(self.node_values[i][j].gn)
+                    print(self.node_values[i][j].parent_i)
+            print()
         self.find_path()
     
     def find_path(self):
@@ -212,6 +245,28 @@ class Algo(object):
             path.insert(0,coord)
             old_x = x
             old_y = y
+        #publish particle cloud
+        self.path = path
+        self.publish_path()
+
+    def publish_path(self):
+        path_pose_array = PoseArray()
+        path_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
+        path_pose_array.poses
+        res = self.map.info.resolution
+        origin_x = self.map.info.origin.position.x
+        origin_y = self.map.info.origin.position.y
+        for coord in self.path:
+            coord_pose = Pose()
+            coord_pose.position.x = -coord[0]*res 
+            coord_pose.position.y = -coord[1]*res
+            path_pose_array.poses.append(coord_pose)
+            print(coord_pose.position)
+        self.path_pub.publish(path_pose_array)
+        print("published")
+        self.path_pub.publish(path_pose_array)
+
+        rospy.spin()
 
 
 
