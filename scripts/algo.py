@@ -237,17 +237,22 @@ class Algo(object):
         path = []
         old_x = self.goal_x
         old_y = self.goal_y
+        print("starting to find path")
         while old_x != self.start_x or old_y != self.start_y:
             x = self.node_values[old_x][old_y].parent_i
             y = self.node_values[old_x][old_y].parent_j
             coord = [x,y]
-            print(coord)
+            #print(coord)
             path.insert(0,coord)
             old_x = x
             old_y = y
         #publish particle cloud
         self.path = path
+        print('path found')
+        r = rospy.Rate(1)
+        r.sleep()
         self.publish_path()
+
 
     def publish_path(self):
         path_pose_array = PoseArray()
@@ -261,15 +266,19 @@ class Algo(object):
             coord_pose.position.x = -coord[0]*res 
             coord_pose.position.y = -coord[1]*res
             path_pose_array.poses.append(coord_pose)
-            print(coord_pose.position)
+            #print(coord_pose.position)
+        r = rospy.Rate(1)
+        r.sleep()
         self.path_pub.publish(path_pose_array)
         print("published")
+        print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
 
-        rospy.spin()
+        
 
 
 
 
 if __name__ == "__main__":
     node = Algo()
+    rospy.spin()
