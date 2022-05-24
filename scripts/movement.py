@@ -98,16 +98,16 @@ def grip_and_lift(self):
     rospy.sleep(2)
     print("lifted")
 
-# Lowers and releases object
+# Lowers object
 def lower(self):
     print("putting")
     goal = [0,0,0,0]
     set_arm(self, goal)
 
-    gripper_joint_goal = [0.01, 0.01]
-    set_gripper(self, gripper_joint_goal)
-    self.time_to_drop = False
-    print("put")
+    # gripper_joint_goal = [0.01, 0.01]
+    # set_gripper(self, gripper_joint_goal)
+    # self.time_to_drop = False
+    # print("put")
 
 def back_up(self):
     twist = Twist(
@@ -146,7 +146,7 @@ def find_and_face_color(self, color):
         } 
     }
         
-    def find_and face_robot(self,robot_color):
+    def find_and_face_robot(self,robot_color):
         #put orange tape on the robot??
         print(robot_color)
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
