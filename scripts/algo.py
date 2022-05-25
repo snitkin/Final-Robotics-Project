@@ -232,6 +232,8 @@ class Algo(object):
                     print(self.node_values[i][j].parent_i)
             print()
         self.find_path()
+        self.gen_waypoints()
+        self.publish_path()
     
     def find_path(self):
         path = []
@@ -251,8 +253,24 @@ class Algo(object):
         print('path found')
         r = rospy.Rate(1)
         r.sleep()
-        self.publish_path()
 
+    def gen_waypoints(self):
+        prev_point = self.path[0]
+        waypoints = [prev_point]
+    
+        for point in self.path:
+            change_x = abs(point[0]-prev_point[0])
+            change_y = abs(point[1]-prev_point[1])
+            if (change_x > 5 or
+            change_y > 5 or 
+            change_x * change_y > 4):
+                waypoints.append(point)
+                prev_point = point
+        self.waypoints = waypoints
+        print("waypoints")
+        print(waypoints)
+
+        
 
     def publish_path(self):
         path_pose_array = PoseArray()
@@ -261,21 +279,19 @@ class Algo(object):
         res = self.map.info.resolution
         origin_x = self.map.info.origin.position.x
         origin_y = self.map.info.origin.position.y
-        for coord in self.path:
+        for coord in self.waypoints:
             coord_pose = Pose()
-            coord_pose.position.x = -coord[0]*res 
-            coord_pose.position.y = -coord[1]*res
+            coord_pose.position.x = coord[0]*res + origin_x
+            coord_pose.position.y = coord[1]*res + origin_y
             path_pose_array.poses.append(coord_pose)
             #print(coord_pose.position)
-        r = rospy.Rate(1)
-        r.sleep()
+        #r = rospy.Rate(1)
+        rospy.sleep(1)
         self.path_pub.publish(path_pose_array)
         print("published")
+        print(path_pose_array.poses)
         print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
-
-        
-
 
 
 
