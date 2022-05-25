@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper, find_and_face_robot
+from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper
 from movement import set_movement_arm, grip_and_lift, lower, find_and_face_ar, find_and_face_color
 
 import rospy, cv2, cv_bridge, numpy
@@ -26,7 +26,6 @@ class Final:
     # Make sure you're running with an int afterwards (1 or 2)
     # rosrun final_robotics_project final.py <1 or 2>
     def __init__(self, robot_code):
-
         self.objective_complete = False
 
         self.robot_code = robot_code
@@ -145,7 +144,7 @@ class Final:
         
         # If code == 1 then let go, back up 
         if self.robot_code == 1:
-            print("gripper callback")
+            print("gripper callback 1")
             print(msg.message)
 
             gripper_joint_goal = [0.01, 0.01]
@@ -159,6 +158,7 @@ class Final:
             self.gripper_publisher.publish(gm)        
         # If code == 2 - 1 has let go, lift
         else:
+            print("gripper callback 2")
             grip_and_lift(self)
 
         # return
@@ -176,13 +176,31 @@ class Final:
         scan[scan == 0] = 60
         self.scan = scan
 
+    def reset(self):
+        set_vel(self, 0,0)
+        set_gripper(self, [0,0])
+        set_arm(self, [0,0,0,0])
+
     #i played with this
     def do_actions(self):
-        set_vel(self, 0,0)
 
+        self.reset()
 
         if self.robot_code == 1:
 
+            self.min_arm_distance = 0.25
+
+            while not self.inFront:
+                find_and_face_color(self, "orange")
+            print("ready for next step")
+            rospy.sleep(1)
+
+            #Goes to and picks up dumbbell
+            drive_to_target(self)
+
+
+            grip_and_lift(self)
+            
             a_star = True
             
             while not a_star:
@@ -237,17 +255,18 @@ class Final:
     #5)once it picks up the button are we putting ar tag on? we can brainstorm this one
     
     #function for first robot to find second robot and for second robot to grab and go somewhere
-    def robot_control(self,number):
-        #call move_robo2_to_position sometime before
-        if number == 0:
-            find_and_face_robot(self,"orange")
-            drive_to_target(self)
-            lower(self)
-        if number == 1:
-            #lower_robot2_arm(self)
-            grip_and_lift(self)
-            find_and_face_ar(self)
-            lower(self)
+    # def robot_control(self,number):
+    #     #call move_robo2_to_position sometime before
+    #     if number == 0:
+    #         grip_and_lift
+    #         find_and_face_robot(self,"orange")
+    #         drive_to_target(self)
+    #         lower(self)
+    #     if number == 1:
+    #         #lower_robot2_arm(self)
+    #         grip_and_lift(self)
+    #         find_and_face_ar(self)
+    #         lower(self)
 
 
             

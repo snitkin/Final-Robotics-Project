@@ -78,11 +78,11 @@ def set_movement_arm(self):
 
 # Grips and lifts an object above the Lidar
 def grip_and_lift(self):
-    #want to determine the height of the pixel (y) at a set distance x 
+
     if self.robot_code == 1:
-        goal = [0,30,0,0]
+        goal = [0,45,0,0]
     else:
-        goal = [0,-50,0,0]
+        goal = [0,25,0,0]
     set_arm(self, goal)
     print("gripper in position")
 
@@ -90,10 +90,8 @@ def grip_and_lift(self):
     gripper_joint_goal = [-0.007, -0.007]
     set_gripper(self, gripper_joint_goal)
 
-    if self.robot_code == 1:
-        goal = [0,-50,0,0]
-    else:
-        goal = [0,-50,0,0]
+
+    goal = [0,-50,0,0]
     set_arm(self, goal)
     rospy.sleep(2)
     print("lifted")
@@ -145,38 +143,7 @@ def find_and_face_color(self, color):
             "upper": numpy.array([19.89, 255, 255])
         } 
     }
-        
-    def find_and_face_robot(self,robot_color):
-        #put orange tape on the robot??
-        print(robot_color)
-        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
-        bounds = {
-        "orange": {
-            "lower": numpy.array([10.93, 63.75, 150.45]),
-            "upper": numpy.array([19.89, 255, 255])
-        }
-    }
-
-    def move_robo2_to_position(self):
-        #im thinking we put an AR tag on the wall and when robot get there be farish
-        #we just have it rotate to face the opening of the maze so the second robot can meet it
-        find_and_face_ar(self)
-        back_up(self)
-        #turn 90 degrees
-        twist = Twist(
-        linear = Vector3(),
-        angular = Vector3()
-    )
-        twist.angular.z = 1.47/4
-        rospy.Rate(2)
-        for i in range(2):
-            twist.angular.z = 1.47/4
-        self.robot_movement_pub(twist)
-
-
-
-
-
+   
     # this erases all pixels that aren't yellow
     mask = cv2.inRange(hsv, bounds[color]['lower'], bounds[color]['upper'])
 
@@ -245,3 +212,32 @@ def find_and_face_ar(self):
         offCenter = 0
     
     set_vel(self, 0, myAngular)
+
+
+     
+    # def find_and_face_robot(self,robot_color):
+    #     #put orange tape on the robot??
+    #     print(robot_color)
+    #     hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+    #     bounds = {
+    #     "orange": {
+    #         "lower": numpy.array([10.93, 63.75, 150.45]),
+    #         "upper": numpy.array([19.89, 255, 255])
+    #     }
+    # }
+
+    # def move_robo2_to_position(self):
+    #     #im thinking we put an AR tag on the wall and when robot get there be farish
+    #     #we just have it rotate to face the opening of the maze so the second robot can meet it
+    #     find_and_face_ar(self)
+    #     back_up(self)
+    #     #turn 90 degrees
+    #     twist = Twist(
+    #     linear = Vector3(),
+    #     angular = Vector3()
+    # )
+    #     twist.angular.z = 1.47/4
+    #     rospy.Rate(2)
+    #     for i in range(2):
+    #         twist.angular.z = 1.47/4
+    #     self.robot_movement_pub(twist)
