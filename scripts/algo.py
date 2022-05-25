@@ -17,6 +17,12 @@ from geometry_msgs.msg import Quaternion, Point, Pose, PoseArray, PoseStamped
 from likelihood_field import LikelihoodField
 from sensor_msgs.msg import LaserScan
 
+import tf
+from tf import TransformListener
+from tf import TransformBroadcaster
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
+
+
 # Ros message import template
 # from q_learning_project.msg import QMatrix
 
@@ -232,6 +238,8 @@ class Algo(object):
                     print(self.node_values[i][j].parent_i)
             print()
         self.find_path()
+        self.gen_waypoints()
+        self.publish_path()
     
     def find_path(self):
         path = []
@@ -251,8 +259,28 @@ class Algo(object):
         print('path found')
         r = rospy.Rate(1)
         r.sleep()
-        self.publish_path()
 
+    def gen_waypoints(self):
+        prev_point = [self.path[0],0] #[[x,y], theta]
+        waypoints = [prev_point]
+    
+        for point in self.path:
+            change_x = abs(point[0]-prev_point[0])
+            change_y = abs(point[1]-prev_point[1])
+            if (change_x > 10 or
+            change_y > 10 or 
+            change_x * change_y > 8):
+                theta = np.arctan(change_y/change_x)
+                waypoints[-1][1] = theta + np.pi/2
+                waypoints.append([point,0])
+                prev_point = point
+                
+            
+        self.waypoints = waypoints
+        print("waypoints")
+        print(waypoints)
+
+        
 
     def publish_path(self):
         path_pose_array = PoseArray()
@@ -261,21 +289,20 @@ class Algo(object):
         res = self.map.info.resolution
         origin_x = self.map.info.origin.position.x
         origin_y = self.map.info.origin.position.y
-        for coord in self.path:
+        for coord in self.waypoints:
             coord_pose = Pose()
-            coord_pose.position.x = -coord[0]*res 
-            coord_pose.position.y = -coord[1]*res
+            coord_pose.orientation = quaternion_from_euler(0,0,coord[1])
+            coord_pose.position.x = coord[0][0]*res + origin_x
+            coord_pose.position.y = coord[0][1]*res + origin_y
             path_pose_array.poses.append(coord_pose)
             #print(coord_pose.position)
-        r = rospy.Rate(1)
-        r.sleep()
+        #r = rospy.Rate(1)
+        rospy.sleep(1)
         self.path_pub.publish(path_pose_array)
         print("published")
+        print(path_pose_array.poses)
         print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
-
-        
-
 
 
 
