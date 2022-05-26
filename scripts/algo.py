@@ -22,6 +22,12 @@ from tf import TransformListener
 from tf import TransformBroadcaster
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
+#move to goal import
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from math import radians, degrees
+from actionlib_msgs.msg import *
+from geometry_msgs.msg import Point 
 
 # Ros message import template
 # from q_learning_project.msg import QMatrix
@@ -261,18 +267,28 @@ class Algo(object):
         r.sleep()
 
     def gen_waypoints(self):
-        prev_point = [self.path[0],0] #[[x,y], theta]
-        waypoints = [prev_point]
-    
+        prev_point = self.path[0]
+        waypoints = [[prev_point, (-1 * np.pi)/2]] #[[x,y], theta]]
+        
         for point in self.path:
             change_x = abs(point[0]-prev_point[0])
             change_y = abs(point[1]-prev_point[1])
             if (change_x > 10 or
             change_y > 10 or 
             change_x * change_y > 8):
-                theta = np.arctan(change_y/change_x)
-                waypoints[-1][1] = theta + np.pi/2
-                waypoints.append([point,0])
+                if change_x != 0:
+                    theta = np.arctan(change_y/change_x) - np.pi/2
+                    print("theta: " + str(theta))
+                    if change_x < 0:
+                        theta = -1 * theta 
+                else:
+                    theta = (-1 * np.pi)/2
+                waypoints[-1][1] = theta
+                print("previous:" + str(prev_point))
+                print("last point: "  + str(waypoints[-1][0]))
+                waypoints.append([point,np.pi])
+                
+
                 prev_point = point
                 
             
@@ -291,7 +307,7 @@ class Algo(object):
         origin_y = self.map.info.origin.position.y
         for coord in self.waypoints:
             coord_pose = Pose()
-            coord_pose.orientation = quaternion_from_euler(0,0,coord[1])
+            coord_pose.orientation = Quaternion(*quaternion_from_euler(0,0,coord[1]))
             coord_pose.position.x = coord[0][0]*res + origin_x
             coord_pose.position.y = coord[0][1]*res + origin_y
             path_pose_array.poses.append(coord_pose)
@@ -303,6 +319,43 @@ class Algo(object):
         print(path_pose_array.poses)
         print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
+
+    def move_along_path(self):
+        for coord in self.waypoints:
+            self.moveToGoal(coord[0][0],coord[0][1],coord[1])
+            print("moved")
+
+    def moveToGoal(self,xGoal,yGoal,orientation):
+
+		#define a client for to send goal requests to the move_base server through a SimpleActionClient
+		ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+
+		#wait for the action server to come up
+		while(not ac.wait_for_server(rospy.Duration.from_sec(5.0))):
+			rospy.loginfo("Waiting for the move_base action server to come up")
+		
+
+		goal = MoveBaseGoal()
+
+		#set up the frame parameters
+		goal.target_pose.header.frame_id = "map"
+		goal.target_pose.header.stamp = rospy.Time.now()
+
+		# moving towards the goal*/
+
+		goal.target_pose.pose.position =  Point(xGoal,yGoal,0)
+		goal.target_pose.pose.orientation = orientation
+
+		rospy.loginfo("Sending goal location ...")
+		ac.send_goal(goal)
+
+		#ac.wait_for_result(rospy.Duration(60))
+
+		while not (ac.get_state() ==  GoalStatus.SUCCEEDED):
+			ac.wait_for_result(rospy.Duration(1))
+        
+
+
 
 
 
