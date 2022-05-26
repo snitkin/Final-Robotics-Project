@@ -106,7 +106,7 @@ class Final:
         self.min_arm_distance = 0.22
         self.min_drop_distance = 0.4
         
-        self.image_init = (self.robot_code == 1)
+        self.image_init = True
 
         while not self.image_init:
             print("waiting for init")
@@ -125,7 +125,7 @@ class Final:
         print(msg.message)
         
         # find and face orange
-        find_and_face_color(self, "orange")
+        # find_and_face_color(self, "orange")
 
         # go to orange
         drive_to_target(self)
@@ -237,8 +237,7 @@ class Final:
             rospy.sleep(2)
             
             # by the time we exit this loop, 2 has the baton over its head
-            msg1 = input("Has robot 1 backed up?")
-
+            msg1 = False
             while not msg1:
                 msg1 = input("Has robot 1 backed up?")
                 
