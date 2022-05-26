@@ -111,6 +111,7 @@ class Algo(object):
 
     def intialize_node_values(self):
         print("started")
+        #buffer is the distance the robot gives to the wall, checks with liklihood fields
         buffer = .18
         init_node = mapNode
         self.node_values = np.full((self.height,self.width),init_node)
@@ -276,7 +277,7 @@ class Algo(object):
             change_y = point[1]-prev_point[1]
             if (abs(change_x) > 10 or
             abs(change_y) > 10 or 
-            abs(change_x) * abs(change_y) > 8):
+            abs(change_x) * abs(change_y) > 6):
                 if change_y == 0:
                     theta =  np.sign(change_x) * (np.pi)
                 elif change_x == 0:
