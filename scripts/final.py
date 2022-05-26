@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from colorama import Back
 from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper
 from movement import set_movement_arm, grip_and_lift, lower, find_and_face_ar, find_and_face_color
 
@@ -104,6 +105,8 @@ class Final:
 
         self.min_arm_distance = 0.22
         self.min_drop_distance = 0.4
+        
+        self.image_init = (self.robot_code == 1)
 
         while not self.image_init:
             print("waiting for init")
@@ -136,7 +139,6 @@ class Final:
         gm = gripper_message(message="done")
         self.gripper_publisher.publish(gm)
 
-        self.secured_baton = True
         return
 
     # Gripper callback, for robot 1
@@ -160,6 +162,7 @@ class Final:
         else:
             print("gripper callback 2")
             grip_and_lift(self)
+            self.secured_baton = True
 
         # return
 
@@ -188,40 +191,60 @@ class Final:
 
         if self.robot_code == 1:
 
-            self.min_arm_distance = 0.25
+            self.min_arm_distance = 0.22
 
-            # while not self.inFront:
-            #     find_and_face_color(self, "orange")
-            # print("ready for next step")
-            # rospy.sleep(1)
+         #Goes to and picks up dumbbell
+            drive_to_target(self)
 
-            # #Goes to and picks up dumbbell
-            # drive_to_target(self)
-
-            # grip_and_lift(self)
+            grip_and_lift(self)
             
             a_star = True
             
             while not a_star:
-                # Do the damn a star
+                # Do the a star
                 i = 1
             
+            rospy.sleep(1)
             lower(self)
 
             done = done_message(message="done")
             self.done_publisher.publish(done)
 
-            print("DONE")
+            print("Run Robot 2 code!\n")
 
+            s = input("Has Robot 2 grabbed the baton?")
+
+            self.objective_complete = True
+            
             # Wait for the other robot to grab the baton
             while not self.objective_complete:
                 i = 1
 
+            gripper_joint_goal = [0.018, 0.018]
+            set_gripper(self, gripper_joint_goal)
+            rospy.sleep(1)
+            back_up(self)
+
+            print("Robot 2 is good to lift")
+
         elif self.robot_code == 2:
+
+            msg = input("Has Robot 1 lowered the baton?")
+
+            done = done_message(message=msg)
+            self.done_callback(done)
+
+            rospy.sleep(2)
             
             # by the time we exit this loop, 2 has the baton over its head
-            while not self.secured_baton:
-                i = 1
+            msg1 = input("Has robot 1 backed up?")
+
+            while not msg1:
+                msg1 = input("Has robot 1 backed up?")
+                
+            done1 = gripper_message(message=msg1)
+
+            self.gripper_callback(done1)
 
             self.objective_complete = True
 

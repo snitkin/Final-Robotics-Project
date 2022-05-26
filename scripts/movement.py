@@ -98,8 +98,10 @@ def grip_and_lift(self):
 
 # Lowers object
 def lower(self):
-    print("putting")
-    goal = [0,25,0,0]
+    if self.robot_code == 1:
+        goal = [0,35,0,0]
+    else:
+        goal = [0,25,0,0]
     set_arm(self, goal)
 
     # gripper_joint_goal = [0.01, 0.01]
