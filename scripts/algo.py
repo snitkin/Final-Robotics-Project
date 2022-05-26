@@ -55,9 +55,6 @@ class Algo(object):
 
         # Initialize this node
         rospy.init_node("algo")
-
-        
-        
         
         #set topic names
         self.map_topic = "map"
@@ -97,6 +94,10 @@ class Algo(object):
         #intialize goal node
         self.intialize_node_values()
         self.a_star()
+        print("a star complete")
+        print("move along path")
+        self.move_along_path()
+
 
         
 
@@ -131,7 +132,7 @@ class Algo(object):
                     thisNode.hn =  (abs(i - self.goal_x) + 
                         abs(j - self.goal_y))          
                 self.node_values[i][j] = thisNode
-        print(self.node_values[28][40].valid)
+        #print(self.node_values[28][40].valid)
         print("node values initialized")
 
     def test_valid(self):
@@ -235,15 +236,16 @@ class Algo(object):
             x = parent_i + change
             y = parent_j
             self.set_new_node(x, y)
-        print(self.closed)
-        print(self.open)
-        for i in range(self.height):
-            for j in range(self.width):
-                if self.node_values[i][j].valid:
-                    print("node: " + str(j)+  ", " + str(i))
-                    print(self.node_values[i][j].gn)
-                    print(self.node_values[i][j].parent_i)
-            print()
+        #print(self.closed)
+        #print(self.open)
+        #for i in range(self.height):
+         #   for j in range(self.width):
+          #      if self.node_values[i][j].valid:
+                    #print("node: " + str(j)+  ", " + str(i))
+                    #print(self.node_values[i][j].gn)
+                    #print(self.node_values[i][j].parent_i)
+            #print()
+        #get path and waypoints
         self.find_path()
         self.gen_waypoints()
         self.publish_path()
@@ -284,12 +286,12 @@ class Algo(object):
                     theta =  np.sign(change_y) * (np.pi)/2
                 elif change_x > 0:
                     theta = np.arctan(change_y/change_x) #- np.pi
-                    print("theta: " + str(theta))
+                    #print("theta: " + str(theta))
                 elif change_x < 0:
                     theta = np.arctan(change_y/change_x) + np.pi
                 waypoints[-1][1] = theta
-                print("previous:" + str(prev_point))
-                print("last point: "  + str(waypoints[-1][0]))
+                #print("previous:" + str(prev_point))
+                #print("last point: "  + str(waypoints[-1][0]))
                 waypoints.append([point, np.pi])
                 
 
@@ -317,47 +319,47 @@ class Algo(object):
             path_pose_array.poses.append(coord_pose)
             #print(coord_pose.position)
         #r = rospy.Rate(1)
+        self.poses = path_pose_array.poses
         rospy.sleep(1)
         self.path_pub.publish(path_pose_array)
         print("published")
         print(path_pose_array.poses)
         print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
-'''
+
     def move_along_path(self):
-        for coord in self.waypoints:
-            self.moveToGoal(coord[0][0],coord[0][1],coord[1])
+        for path_pose in self.poses:
+            self.moveToGoal(path_pose)
             print("moved")
 
-    def moveToGoal(self,xGoal,yGoal,orientation):
-
+    def moveToGoal(self, goal_pose):
 		#define a client for to send goal requests to the move_base server through a SimpleActionClient
-		ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+        ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
 
 		#wait for the action server to come up
-		while(not ac.wait_for_server(rospy.Duration.from_sec(5.0))):
-			rospy.loginfo("Waiting for the move_base action server to come up")
+        while (not ac.wait_for_server(rospy.Duration.from_sec(5.0))):
+            rospy.loginfo("Waiting for the move_base action server to come up")
 		
 
-		goal = MoveBaseGoal()
+        goal = MoveBaseGoal()
 
-		#set up the frame parameters
-		goal.target_pose.header.frame_id = "map"
-		goal.target_pose.header.stamp = rospy.Time.now()
+        #set up the frame parameters
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
 
-		# moving towards the goal*/
+        # moving towards the goal*/
 
-		goal.target_pose.pose.position =  Point(xGoal,yGoal,0)
-		goal.target_pose.pose.orientation = orientation
+        goal.target_pose.pose = goal_pose
 
-		rospy.loginfo("Sending goal location ...")
-		ac.send_goal(goal)
+        rospy.loginfo("Sending goal location ...")
+        ac.send_goal(goal)
+        print("goal sent")
 
-		#ac.wait_for_result(rospy.Duration(60))
+        #ac.wait_for_result(rospy.Duration(60))
 
-		while not (ac.get_state() ==  GoalStatus.SUCCEEDED):
-			ac.wait_for_result(rospy.Duration(1))
-'''
+        while not (ac.get_state() ==  GoalStatus.SUCCEEDED):
+            ac.wait_for_result(rospy.Duration(1))
+            print("moving to goal")
 
 
 
