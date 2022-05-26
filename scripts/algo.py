@@ -84,9 +84,9 @@ class Algo(object):
 
         # test values
         self.start_x = 12
-        self.start_y = 12
-        self.goal_x = 70 
-        self.goal_y = 70
+        self.start_y = 10
+        self.goal_x = 58
+        self.goal_y = 54
         self.width = self.map.info.width
         self.height = self.map.info.height
 
@@ -113,7 +113,7 @@ class Algo(object):
     def intialize_node_values(self):
         print("started")
         #buffer is the distance the robot gives to the wall, checks with liklihood fields
-        buffer = .18
+        buffer = .3
         init_node = mapNode
         self.node_values = np.full((self.height,self.width),init_node)
         for i in range(self.height):
@@ -236,14 +236,14 @@ class Algo(object):
             x = parent_i + change
             y = parent_j
             self.set_new_node(x, y)
-        #print(self.closed)
-        #print(self.open)
-        #for i in range(self.height):
-         #   for j in range(self.width):
-          #      if self.node_values[i][j].valid:
-                    #print("node: " + str(j)+  ", " + str(i))
-                    #print(self.node_values[i][j].gn)
-                    #print(self.node_values[i][j].parent_i)
+        print(self.closed)
+        print(self.open)
+        for i in range(self.height):
+           for j in range(self.width):
+              if self.node_values[i][j].valid:
+                    print("node: " + str(j)+  ", " + str(i))
+                    print(self.node_values[i][j].gn)
+                    print(self.node_values[i][j].parent_i)
             #print()
         #get path and waypoints
         self.find_path()
@@ -259,7 +259,7 @@ class Algo(object):
             x = self.node_values[old_x][old_y].parent_i
             y = self.node_values[old_x][old_y].parent_j
             coord = [x,y]
-            #print(coord)
+            print(coord)
             path.append(coord)
             old_x = x
             old_y = y

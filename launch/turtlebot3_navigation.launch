@@ -11,7 +11,7 @@
   </include>
 
   <!-- Map server -->
-  <node pkg="map_server" name="map_server" type="map_server" args="$(find final_robotics_project)/map/maze.yaml"/>
+  <node pkg="map_server" name="map_server" type="map_server" args="$(find final_robotics_project)/map/maze_simple.yaml"/>
 
   <!-- AMCL -->
   <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
