@@ -32,8 +32,9 @@ from geometry_msgs.msg import Point
 # Ros message import template
 # from q_learning_project.msg import QMatrix
 
-#TODO define buffer as robot size in meter
 
+#map nodes are the elements of our Astar array
+#each node contains info about a star at that point
 class mapNode(object):
     def __init__(self):
         self.gn = np.nan
@@ -83,7 +84,7 @@ class Algo(object):
             i = 1
 
         # test values
-        self.start_x = 12
+        self.start_x = 2
         self.start_y = 10
         self.goal_x = 58
         self.goal_y = 54
@@ -101,12 +102,13 @@ class Algo(object):
 
         
 
-    
+    #callback function for map
     def get_map(self, data):
 
         self.map = data
         self.map_initialized = True
 
+    #call back function for laser scanner
     def robot_scan_received(self, data):
         return
 
@@ -135,6 +137,7 @@ class Algo(object):
         #print(self.node_values[28][40].valid)
         print("node values initialized")
 
+    #test if we are using liklihood filter to determine values correctly, we are
     def test_valid(self):
         valid = np.full((self.height,self.width),0)
         valid[1][2] = -1
@@ -143,6 +146,8 @@ class Algo(object):
         self.valid = valid
         print(self.valid)
 
+    
+    #test if we intialize nodes properly, we are
     def test_init_nodes(self,x,y):
         self.test_valid()
         
@@ -154,9 +159,13 @@ class Algo(object):
                 self.node_values[i][j] = mapNode()
         print(self.node_values)
 
+    
+    #function for determing the values of a new node in the a star algorithm
     def set_new_node(self, x, y):
+        # if the node is the goal, we will end the algorithm
         if x == self.goal_x and y == self.goal_y:
             self.found = True
+        #if node already found, continue
         if  (x >= len(self.node_values) or y >= len(self.node_values[0])
                 or x < 0 or y < 0):
             return
@@ -180,8 +189,9 @@ class Algo(object):
     
       
             
-
+    #function for running the a star algorithm
     def a_star(self):
+        #get the map info
         max_width = self.map.info.width
         max_height = self.map.info.height
         self.open = np.full((max_height, max_width), False)
@@ -250,36 +260,46 @@ class Algo(object):
         self.gen_waypoints()
         self.publish_path()
     
+    
+    #function for determing the path by backrracking through closed list
     def find_path(self):
         path = []
         old_x = self.goal_x
         old_y = self.goal_y
         print("starting to find path")
+        #while not at the start
         while old_x != self.start_x or old_y != self.start_y:
+            #find parents of the node
             x = self.node_values[old_x][old_y].parent_i
             y = self.node_values[old_x][old_y].parent_j
             coord = [x,y]
             print(coord)
+            #append to lisy of coordinates
             path.append(coord)
             old_x = x
             old_y = y
         #publish particle cloud
         self.path = path
+        #path for testing
         #self.path = [[76,76], [50,70]]
         print('path found')
         r = rospy.Rate(1)
         r.sleep()
 
+    #from path, determine when there has been large enough change to set as waypoint
     def gen_waypoints(self):
         prev_point = self.path[0]
         waypoints = [[prev_point, (-1 * np.pi)/2]] #[[x,y], theta]]
         
+        #iterate through the path, find deltas
         for point in self.path:
             change_x = point[0]-prev_point[0]
             change_y = point[1]-prev_point[1]
-            if (abs(change_x) > 10 or
-            abs(change_y) > 10 or 
-            abs(change_x) * abs(change_y) > 6):
+            #if the change is large enough, generate a new waypoint
+            if (abs(change_x) > 20 or
+            abs(change_y) > 20 or 
+            abs(change_x) * abs(change_y) > 15):
+                #x and y kinda switched, different angles for different quadrants
                 if change_y == 0:
                     theta =  np.sign(change_x) * (np.pi)
                 elif change_x == 0:
@@ -303,7 +323,7 @@ class Algo(object):
         print(waypoints)
 
         
-
+    #publish the way points as particles to visualize
     def publish_path(self):
         path_pose_array = PoseArray()
         path_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
@@ -311,6 +331,7 @@ class Algo(object):
         res = self.map.info.resolution
         origin_x = self.map.info.origin.position.x
         origin_y = self.map.info.origin.position.y
+        #for each waypoint, convert to meters from pixels
         for coord in self.waypoints:
             coord_pose = Pose()
             coord_pose.orientation = Quaternion(*quaternion_from_euler(0,0,coord[1]))
@@ -327,11 +348,13 @@ class Algo(object):
         print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
 
+    #for each way point, move to it
     def move_along_path(self):
         for path_pose in self.poses:
             self.moveToGoal(path_pose)
             print("moved")
 
+    #using action client, move to goal
     def moveToGoal(self, goal_pose):
 		#define a client for to send goal requests to the move_base server through a SimpleActionClient
         ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
@@ -361,9 +384,9 @@ class Algo(object):
             ac.wait_for_result(rospy.Duration(1))
             print("moving to goal")
 
+            
 
-
-
+#spin node
 if __name__ == "__main__":
     node = Algo()
     rospy.spin()
