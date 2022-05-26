@@ -20,7 +20,10 @@ TODO: Diagrams and gifs
 
 # Execution
 ## Path Finding
-- TODO
+- once turtlbot is roscore and brought up, 
+place it at the start of the maze (closer to CSIL 5) facing the goal
+- roslaunch final_robotics_project turtlebot3_navigation.launch
+- rosrun final_robotics_project algo.py
 
 ## Baton Pass Commands
 - roslaunch turtlebot3_manipulation_bringup turtlebot3_manipulation_bringup.launch
