@@ -257,11 +257,12 @@ class Algo(object):
             y = self.node_values[old_x][old_y].parent_j
             coord = [x,y]
             #print(coord)
-            path.insert(0,coord)
+            path.append(coord)
             old_x = x
             old_y = y
         #publish particle cloud
         self.path = path
+        #self.path = [[76,76], [50,70]]
         print('path found')
         r = rospy.Rate(1)
         r.sleep()
@@ -271,22 +272,24 @@ class Algo(object):
         waypoints = [[prev_point, (-1 * np.pi)/2]] #[[x,y], theta]]
         
         for point in self.path:
-            change_x = abs(point[0]-prev_point[0])
-            change_y = abs(point[1]-prev_point[1])
-            if (change_x > 10 or
-            change_y > 10 or 
-            change_x * change_y > 8):
-                if change_x != 0:
-                    theta = np.arctan(change_y/change_x) - np.pi/2
+            change_x = point[0]-prev_point[0]
+            change_y = point[1]-prev_point[1]
+            if (abs(change_x) > 10 or
+            abs(change_y) > 10 or 
+            abs(change_x) * abs(change_y) > 8):
+                if change_y == 0:
+                    theta =  np.sign(change_x) * (np.pi)
+                elif change_x == 0:
+                    theta =  np.sign(change_y) * (np.pi)/2
+                elif change_x > 0:
+                    theta = np.arctan(change_y/change_x) #- np.pi
                     print("theta: " + str(theta))
-                    if change_x < 0:
-                        theta = -1 * theta 
-                else:
-                    theta = (-1 * np.pi)/2
+                elif change_x < 0:
+                    theta = np.arctan(change_y/change_x) + np.pi
                 waypoints[-1][1] = theta
                 print("previous:" + str(prev_point))
                 print("last point: "  + str(waypoints[-1][0]))
-                waypoints.append([point,np.pi])
+                waypoints.append([point, np.pi])
                 
 
                 prev_point = point
@@ -319,7 +322,7 @@ class Algo(object):
         print(path_pose_array.poses)
         print(len(path_pose_array.poses))
         self.path_pub.publish(path_pose_array)
-
+'''
     def move_along_path(self):
         for coord in self.waypoints:
             self.moveToGoal(coord[0][0],coord[0][1],coord[1])
@@ -353,8 +356,7 @@ class Algo(object):
 
 		while not (ac.get_state() ==  GoalStatus.SUCCEEDED):
 			ac.wait_for_result(rospy.Duration(1))
-        
-
+'''
 
 
 
