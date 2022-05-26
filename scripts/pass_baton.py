@@ -113,10 +113,6 @@ class Final:
         else:
             print("intialized")
             self.do_actions()
-            #if one then for the first robot finding second robot
-            #if two then for second robot finding ar tag??
-
-            # self.robot_control()
 
     # Done callback, for robot 2
     def done_callback(self, msg):
@@ -125,13 +121,13 @@ class Final:
         print(msg.message)
         
         # find and face orange
-        # find_and_face_color(self, "orange")
+        find_and_face_color(self, "orange")
 
         # go to orange
         drive_to_target(self)
 
 
-        # Pick up the thing
+        # Pick up the baton
         gripper_joint_goal = [-0.007, -0.007]
         set_gripper(self, gripper_joint_goal)
 
@@ -157,7 +153,8 @@ class Final:
             self.objective_complete = True
 
             gm = gripper_message(message="done")
-            self.gripper_publisher.publish(gm)        
+            self.gripper_publisher.publish(gm)
+
         # If code == 2 - 1 has let go, lift
         else:
             print("gripper callback 2")
@@ -179,6 +176,7 @@ class Final:
         scan[scan == 0] = 60
         self.scan = scan
 
+# Helper function to cancel movement and arm angles
     def reset(self):
         set_vel(self, 0,0)
         set_gripper(self, [0,0])
@@ -193,7 +191,7 @@ class Final:
 
             self.min_arm_distance = 0.22
 
-         #Goes to and picks up dumbbell
+         #Goes to and picks up baton
             drive_to_target(self)
 
             grip_and_lift(self)
@@ -256,6 +254,8 @@ class Final:
         rospy.spin()
             
 if __name__ == '__main__':
+
+    # Robot code is passed in as an argument to differentiate between bots
     robot_code = sys.argv[1]
     follower = Final(int(robot_code))
     follower.run()
