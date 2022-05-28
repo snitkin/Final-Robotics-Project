@@ -52,6 +52,32 @@ def drive_to_target(self):
     set_vel(self, 0,0)
     rospy.sleep(1)
 
+def drive_to_basket(self):
+
+    bound1, bound2 = -10, 11
+
+    m = 100
+    while m > 0.3:
+
+        scan = list(self.scan)
+        arr = scan[bound1:] + scan[:bound2]
+        m = min(arr)
+
+        index = arr.index(m)
+
+        #-9 instead of -10 to compensate for listing to the right
+        index -= -(bound1 + 1)
+
+        angular = (kp * index / 2)
+
+        set_vel(self, 0.05, angular)
+        rospy.sleep(0.1)  
+
+    print("done with while")
+
+    set_vel(self, 0,0)
+    rospy.sleep(1)
+
 # Sets arm to set of given params
 def set_arm(self, goal):
     goal = map(math.radians, goal)
@@ -180,6 +206,103 @@ def find_and_face_color(self, color):
         offCenter = 0
     
     set_vel(self, 0,angular)
+    
+def find_and_face_line(self, color):  
+    print(color)
+    #print("finding color")  
+    hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+    #print("There's an image")
+    
+    #define hsv values of different colors
+    bounds = {
+        "orange": {
+            "lower": numpy.array([10.93, 63.75, 150.45]),
+            "upper": numpy.array([19.89, 255, 255])
+        } 
+    }
+   
+    # this erases all pixels that aren't yellow
+    mask = cv2.inRange(hsv, bounds[color]['lower'], bounds[color]['upper'])
+
+    # this limits our search scope to only view a slice of the image near the ground
+    h, w, d = self.image.shape
+    search_top = int(3*h/4)
+    search_bot = int(3*h/4 + 20)
+    mask[0:search_top, 0:w] = 0
+    mask[search_bot:h, 0:w] = 0
+    # using moments() function, the center of the yellow pixels is determined
+    M = cv2.moments(mask)
+    cx = np.NAN
+    cy = np.NAN
+    # if there are any color pixels found
+    if M['m00'] > 0:
+                # center of the color pixels in the image
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+
+        # a red circle is visualized in the debugging window to indicate
+        # the center point of the yellow pixels
+        cv2.circle(self.image, (cx, cy), 20, (0,0,255), -1)
+
+    angular = 0
+    #how left is the dot from the center of the image 
+    rotFactor = -0.005
+    if(not np.isnan(cx)):
+        offCenter = cx - w/2
+        #if facing robot with margin of error
+        if offCenter in range(-2, 2):
+            self.inFront = True
+        angular = rotFactor * offCenter
+    else:
+        angular = 0.1
+        offCenter = 0
+    
+    set_vel(self, 0,angular)
+
+def line_follower(self,color):
+        print(color)
+    #print("finding color")  
+    hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+    #print("There's an image")
+    
+    #define hsv values of different colors
+    bounds = {
+        "orange": {
+            "lower": numpy.array([10.93, 63.75, 150.45]),
+            "upper": numpy.array([19.89, 255, 255])
+        } 
+    }
+   
+    # this erases all pixels that aren't yellow
+    mask = cv2.inRange(hsv, bounds[color]['lower'], bounds[color]['upper'])
+
+    # this limits our search scope to only view a slice of the image near the ground
+    h, w, d = self.image.shape
+    search_top = int(3*h/4)
+    search_bot = int(3*h/4 + 20)
+    mask[0:search_top, 0:w] = 0
+    mask[search_bot:h, 0:w] = 0
+    # using moments() function, the center of the yellow pixels is determined
+    M = cv2.moments(mask)
+    cx = np.NAN
+    cy = np.NAN
+    # if there are any color pixels found
+    if M['m00'] > 0:
+                # center of the color pixels in the image
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+
+        # a red circle is visualized in the debugging window to indicate
+        # the center point of the yellow pixels
+        cv2.circle(self.image, (cx, cy), 20, (0,0,255), -1)
+
+        kp = 0.2/w
+        new_ang = kp*(cx - w/2)
+        set_vel(self,.05,new_ang)
+    else:
+        print("color not found")
+        set_vel(self,0,.2)
+
 
 def find_and_face_ar(self):
     h, w, d = self.image.shape

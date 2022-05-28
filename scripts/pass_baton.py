@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from colorama import Back
-from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper
-from movement import set_movement_arm, grip_and_lift, lower, find_and_face_ar, find_and_face_color
+from movement import back_up, set_movement_arm, set_vel, drive_to_target, set_arm, set_gripper, drive_to_basket
+from movement import set_movement_arm, grip_and_lift, lower, find_and_face_ar, find_and_face_color, find_and_face_line, line_follower
 
 import rospy, cv2, cv_bridge, numpy
 from sensor_msgs.msg import Image, LaserScan
@@ -137,6 +137,22 @@ class Final:
 
         return
 
+    def done_callback2(self,msg):
+        print("done callback")
+        print(msg.message)
+        #will drive foward to finish line 
+        r = rospy.Rate(2)
+        for r in range(10):
+            set_vel(self, .1,0)
+            rospy.sleep(1)
+            #will do a little happy dance
+            for i in range(4):
+                set_vel(self,0,.1)
+                set_vel(self,0,-.15)
+
+
+        
+
     # Gripper callback, for robot 1
     def gripper_callback(self, msg):
         
@@ -182,7 +198,7 @@ class Final:
         set_gripper(self, [0,0])
         set_arm(self, [0,0,0,0])
 
-    #i played with this
+    
     def do_actions(self):
 
         self.reset()
@@ -243,11 +259,42 @@ class Final:
 
             self.gripper_callback(done1)
 
+            #self.objective_complete after this
             self.objective_complete = True
 
             while not self.objective_complete:
                 i = 1
-    
+        #after it has the baton it finds line and drops baton in a basket
+            find_and_face_line(self, "orange")
+            line_follower(self,"orange")
+            #how does the robot know its done with line follower?? figure that out
+            drive_to_basket(self)
+            gripper_joint_goal = [0.018, 0.018]
+            set_gripper(self, gripper_joint_goal)
+            rospy.sleep(1)
+            
+            #publishes that its done
+            done = done_message(message="done")
+            self.done_publisher.publish(done)
+
+            print("Run Robot 3 code!\n")
+        
+        elif self.robot_code == 3:
+
+            msg2 = input("Has Robot 2 lowered the baton into the basket?")
+
+            done = done_message(message=msg)
+            self.done_callback2(done)
+
+            rospy.sleep(2)
+
+            #not sure if i need this
+            self.objective_complete = True
+
+            while not self.objective_complete:
+                i = 1
+            
+            
         return True
 
     def run(self):
