@@ -260,7 +260,7 @@ def find_and_face_line(self, color):
     set_vel(self, 0,angular)
 
 def line_follower(self,color):
-        print(color)
+    print(color)
     #print("finding color")  
     hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
     #print("There's an image")

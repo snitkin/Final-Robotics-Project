@@ -28,6 +28,7 @@ class Final:
     # rosrun final_robotics_project final.py <1 or 2>
     def __init__(self, robot_code):
         self.objective_complete = False
+        self.objective_complete2 = False  
 
         self.robot_code = robot_code
         
@@ -45,11 +46,12 @@ class Final:
         print("not yet initialized")
 
         self.gripper_publisher = rospy.Publisher('gripper_action', 
-            gripper_message)
+            gripper_message, queue_size=20)
 
 
         self.gripper_subscriber = rospy.Subscriber('gripper_action',
             gripper_message, self.gripper_callback)
+        
 
         # Publishers and subscribers
         if robot_code == 1:
@@ -62,6 +64,18 @@ class Final:
             self.done_subscriber =  rospy.Subscriber('done_action',
             done_message, self.done_callback)
             self.secured_baton = False
+
+            #self.done_subscriber =  rospy.Subscriber('done_action',
+            #done_message, self.line_callback)
+            self.objective_complete2 = False
+
+            #Done Publisher
+            self.done_publisher = rospy.Publisher('done_action', 
+            done_message)
+
+        elif robot_code == 3:
+            self.done_subscriber =  rospy.Subscriber('done_action',
+            done_message, self.done_callback2)
 
         
         else:
@@ -138,17 +152,19 @@ class Final:
         return
 
     def done_callback2(self,msg):
-        print("done callback")
-        print(msg.message)
+        print("done callback2")
         #will drive foward to finish line 
         r = rospy.Rate(2)
         for r in range(10):
             set_vel(self, .1,0)
             rospy.sleep(1)
             #will do a little happy dance
-            for i in range(4):
-                set_vel(self,0,.1)
-                set_vel(self,0,-.15)
+        for i in range(4):
+            set_vel(self,0,.35)
+            rospy.sleep(1)
+            set_vel(self,0,-.4)
+            rospy.sleep(1)
+        set_vel(self,0,0)
 
 
         
@@ -176,8 +192,61 @@ class Final:
             print("gripper callback 2")
             grip_and_lift(self)
             self.secured_baton = True
+            print("starting robot 3")     
+            #after it has the baton it finds line and drops baton in a basket
+            find_and_face_line(self, "orange")
+            
+            print("following")
+            line_follower(self,"orange")
+
+            #how does the robot know its done with line follower?? figure that out
+            
+            msg2 = False
+            while not msg2:
+                msg2 = input("Has line follower finished")
+            
+            print("driving to basket")
+            drive_to_basket(self)
+
+            print("dropping in basket")
+            gripper_joint_goal = [0.018, 0.018]
+            set_gripper(self, gripper_joint_goal)
+            rospy.sleep(1)
+
+            self.objective_complete2 = True
+
+            #publishes that its done
+            done = done_message(message="done")
+            self.done_publisher.publish(done)
+ 
+
+            print("im here")
+            
 
         # return
+    def line_callback(self,msg):
+        
+
+        print("starting robot 3")     
+        #after it has the baton it finds line and drops baton in a basket
+        
+        print("looking for line")
+        find_and_face_line(self, "orange")
+        print("following")
+        line_follower(self,"orange")
+        #how does the robot know its done with line follower?? figure that out
+        print("driving to basket")
+        drive_to_basket(self)
+        print("dropping in basket")
+        gripper_joint_goal = [0.018, 0.018]
+        set_gripper(self, gripper_joint_goal)
+        rospy.sleep(1)
+
+        self.objective_complete2 = True
+
+        #publishes that its done
+        done = done_message(message="done")
+        self.done_publisher.publish(done)
 
     #image callback function
     def image_callback(self, msg):
@@ -256,26 +325,22 @@ class Final:
                 msg1 = input("Has robot 1 backed up?")
                 
             done1 = gripper_message(message=msg1)
-
             self.gripper_callback(done1)
 
+            rospy.sleep(2)
+
+            print("welp")
+            msg2 = False
+            while not msg2:
+                msg2 = input("does robot need this")
+            done2 = line_message(message=msg2)
+            self.line_callback(done2)
+            
             #self.objective_complete after this
             self.objective_complete = True
 
             while not self.objective_complete:
                 i = 1
-        #after it has the baton it finds line and drops baton in a basket
-            find_and_face_line(self, "orange")
-            line_follower(self,"orange")
-            #how does the robot know its done with line follower?? figure that out
-            drive_to_basket(self)
-            gripper_joint_goal = [0.018, 0.018]
-            set_gripper(self, gripper_joint_goal)
-            rospy.sleep(1)
-            
-            #publishes that its done
-            done = done_message(message="done")
-            self.done_publisher.publish(done)
 
             print("Run Robot 3 code!\n")
         
@@ -283,11 +348,11 @@ class Final:
 
             msg2 = input("Has Robot 2 lowered the baton into the basket?")
 
-            done = done_message(message=msg)
+            done = done_message(message=msg2)
             self.done_callback2(done)
 
             rospy.sleep(2)
-
+            
             #not sure if i need this
             self.objective_complete = True
 
