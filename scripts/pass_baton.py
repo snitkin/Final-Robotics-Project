@@ -197,56 +197,36 @@ class Final:
             find_and_face_line(self, "orange")
             
             print("following")
-            line_follower(self,"orange")
+            
+            while line_follower(self,"orange"):
+                i = 1
+                
+            print("done with line follower")
+
 
             #how does the robot know its done with line follower?? figure that out
             
-            msg2 = False
-            while not msg2:
-                msg2 = input("Has line follower finished")
+            #msg2 = False
+            #while not msg2:
+            #    msg2 = input("Has line follower finished")
             
             print("driving to basket")
             drive_to_basket(self)
-
+            rospy.sleep(1)
             print("dropping in basket")
+            lower(self)
             gripper_joint_goal = [0.018, 0.018]
             set_gripper(self, gripper_joint_goal)
             rospy.sleep(1)
 
-            self.objective_complete2 = True
-
+            set_vel(self,0,0)
             #publishes that its done
             done = done_message(message="done")
             self.done_publisher.publish(done)
  
 
             print("im here")
-            
-
-        # return
-    def line_callback(self,msg):
-        
-
-        print("starting robot 3")     
-        #after it has the baton it finds line and drops baton in a basket
-        
-        print("looking for line")
-        find_and_face_line(self, "orange")
-        print("following")
-        line_follower(self,"orange")
-        #how does the robot know its done with line follower?? figure that out
-        print("driving to basket")
-        drive_to_basket(self)
-        print("dropping in basket")
-        gripper_joint_goal = [0.018, 0.018]
-        set_gripper(self, gripper_joint_goal)
-        rospy.sleep(1)
-
-        self.objective_complete2 = True
-
-        #publishes that its done
-        done = done_message(message="done")
-        self.done_publisher.publish(done)
+            return
 
     #image callback function
     def image_callback(self, msg):
@@ -329,18 +309,20 @@ class Final:
 
             rospy.sleep(2)
 
-            print("welp")
-            msg2 = False
-            while not msg2:
-                msg2 = input("does robot need this")
-            done2 = line_message(message=msg2)
-            self.line_callback(done2)
-            
             #self.objective_complete after this
             self.objective_complete = True
 
             while not self.objective_complete:
                 i = 1
+
+            #print("welp")
+            #msg2 = False
+            while not msg2:
+                msg2 = input("does robot need this")
+            done2 = line_message(message=msg2)
+            self.line_callback(done2)
+            
+
 
             print("Run Robot 3 code!\n")
         

@@ -57,7 +57,7 @@ def drive_to_basket(self):
     bound1, bound2 = -10, 11
 
     m = 100
-    while m > 0.3:
+    while m > 0.15:
 
         scan = list(self.scan)
         arr = scan[bound1:] + scan[:bound2]
@@ -208,7 +208,6 @@ def find_and_face_color(self, color):
     set_vel(self, 0,angular)
     
 def find_and_face_line(self, color):  
-    print(color)
     #print("finding color")  
     hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
     #print("There's an image")
@@ -239,6 +238,7 @@ def find_and_face_line(self, color):
                 # center of the color pixels in the image
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
+        print("color found")
 
         # a red circle is visualized in the debugging window to indicate
         # the center point of the yellow pixels
@@ -254,13 +254,14 @@ def find_and_face_line(self, color):
             self.inFront = True
         angular = rotFactor * offCenter
     else:
+        print("color not found")
         angular = 0.1
         offCenter = 0
     
     set_vel(self, 0,angular)
 
 def line_follower(self,color):
-    print(color)
+    
     #print("finding color")  
     hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
     #print("There's an image")
@@ -295,13 +296,16 @@ def line_follower(self,color):
         # a red circle is visualized in the debugging window to indicate
         # the center point of the yellow pixels
         cv2.circle(self.image, (cx, cy), 20, (0,0,255), -1)
-
+        print("on my proportional control")
         kp = 0.2/w
         new_ang = kp*(cx - w/2)
         set_vel(self,.05,new_ang)
+        return True
     else:
-        print("color not found")
-        set_vel(self,0,.2)
+        print("no line found")
+        set_vel(self,0,0)
+        return False
+    
 
 
 def find_and_face_ar(self):
