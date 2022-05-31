@@ -67,7 +67,7 @@ class Final:
 
             #self.done_subscriber =  rospy.Subscriber('done_action',
             #done_message, self.line_callback)
-            self.objective_complete2 = False
+            #self.objective_complete2 = False
 
             #Done Publisher
             self.done_publisher = rospy.Publisher('done_action', 
@@ -155,16 +155,18 @@ class Final:
         print("done callback2")
         #will drive foward to finish line 
         r = rospy.Rate(2)
+        print("1")
         for r in range(10):
             set_vel(self, .1,0)
             rospy.sleep(1)
             #will do a little happy dance
+        print("2")
         for i in range(4):
             set_vel(self,0,.35)
             rospy.sleep(1)
             set_vel(self,0,-.4)
             rospy.sleep(1)
-        set_vel(self,0,0)
+            set_vel(self,0,0)
 
 
         
@@ -194,16 +196,16 @@ class Final:
             self.secured_baton = True
             print("starting robot 3")     
             #after it has the baton it finds line and drops baton in a basket
-            find_and_face_line(self, "orange")
+        
+            r = rospy.Rate(3)
+            for r in range(10):
+                set_vel(self,0,.9)
+            print("done turning")
+            rospy.sleep(1)
             
-            print("following")
+            #find_and_face_line(self, "orange")
             
-            while line_follower(self,"orange"):
-                i = 1
-                
-            print("done with line follower")
-
-
+        
             #how does the robot know its done with line follower?? figure that out
             
             #msg2 = False
@@ -226,7 +228,7 @@ class Final:
  
 
             print("im here")
-            return
+        return
 
     #image callback function
     def image_callback(self, msg):
@@ -261,7 +263,7 @@ class Final:
 
             grip_and_lift(self)
             
-            a_star = True
+            a_star = False
             
             while not a_star:
                 # Do the a star
@@ -332,8 +334,8 @@ class Final:
 
             done = done_message(message=msg2)
             self.done_callback2(done)
-
-            rospy.sleep(2)
+            print("get here")
+            #rospy.sleep(2)
             
             #not sure if i need this
             self.objective_complete = True

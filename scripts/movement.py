@@ -198,7 +198,7 @@ def find_and_face_color(self, color):
     if(not np.isnan(cx)):
         offCenter = cx - w/2
         #if facing robot with margin of error
-        if offCenter in range(-2, 2):
+        if offCenter in range(-1, 1):
             self.inFront = True
         angular = rotFactor * offCenter
     else:
@@ -207,7 +207,11 @@ def find_and_face_color(self, color):
     
     set_vel(self, 0,angular)
     
-def find_and_face_line(self, color):  
+def find_and_face_line(self, color): 
+    r = rospy.Rate(3)
+    for r in range(5):
+        set_vel(self,0,.5)
+
     #print("finding color")  
     hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
     #print("There's an image")
