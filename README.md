@@ -5,22 +5,22 @@ Code is in algo.py and final.py.  We reused a lot of our code from Q Learning, b
 
 # Project Description
 The goal of this project is to have the robot complete a relay race. This project incorporates many of the different algorithms and topics that we learned throughout the quarter. Due to this, we thought it would be a good way to tie what we have learned into a single project in a fun and visual way. The first main component of this project is to incoporate A* path finding algorithm to have the robot sucessfully navigate through a maze with a baton in hand. Once the robot makes it out of the maze it will have to pass the baton to another robot that meets it at the exit of the maze. Using user input the robots communicate with eachother to pass the baton. The second robot with the baton in hand will continue the relay, following along a line until it reaches the end and activates a third robot that will make it to the finish line. 
+
 TODO: Diagrams and gifs
 
 # System Architecture
 ## Path Finding
 
-Path finding uses the A star algorithm in algo.py. Three arrays are generated that are the same dimensions as the map: the open array, the closed array, and node info. Iterating through the a star algorithm from a hardcoded start node, the node info is calculated and nodes are added and removed from the other two arrays as appropriate. When the hardcoded end node is reached, a path is calculated by tracking parent nodes through the closed list. Using this path, waypoints are claculated by iterating through and finding when changes in x and y coordinates are sufficiently big enough to constitute a new way point. 
+Path finding uses the A star algorithm in algo.py. Three arrays are generated that are the same dimensions as the map: the open array, the closed array, and node info. Iterating through the a star algorithm from a hardcoded start node, the node info is calculated and nodes are added and removed from the other two arrays as appropriate. When the hardcoded end node is reached, a path is calculated by tracking parent nodes through the closed list. Using this path, waypoints are claculated by iterating through and finding when changes in x and y coordinates are sufficiently big enough to constitute a new way point.
+
 
 ## Navigation
 
 The code for navigation can be found in algo.py in move_along_path() and moveToGoal(). Once the waypoints have been generated, we iterate along the path for each goal_pose. Each goal_pose is added to the action client, which reads the goal to move the robot there. The action client waits until the goal has been reached, at which point it returns that the status of the goal is completed and the function moves on to the next goal pose.
 
-## Baton Pass
+## Baton Pass and Race to Finish Line
 
-## Line-Follower
-
-## Race to the Finish Line
+The code for the baton pass can be found in pass_baton.py all within the do_action() function where many of the functions inside are then imported from movement.py. If pass_baton.py is run with argument value 1 then the code will first pick up the baton then publish a done message when the robot has completed the maze. The second robot can be called upon when running pass_baton.py with argument value 2. The user will then be prompted with a question to see if robot one has lowered the baton. Robot 2 will then pick up the baton then turn to drop it off in in a basket. At this point robot three can be run by running pass_baton.py with argument value 3
 
 
 
@@ -39,6 +39,10 @@ place it at the start of the maze (closer to CSIL 5) facing the goal
 
 # Challenges
 
+## Relay
+- One of the main challanges with the second part of the relay was trying to incorporate new components that we havent worked with before. One of the desired obstacles was trying to get the robot to go up a ramp. We found that when we tried to teleop the robot up the ramp it wouldnt be feasible unless the robot was coming in at an angle while maintaining an accelerating velocity. Once it did make it up the ramp due to the friction difference the robot would often make it our of the sides. As a result we decided to resort to simpler relay activities like droping the baton in the basket. 
+## Pass the Baton 
+-  
 ## Orinetation
 
 Our map was flipped in RVIZ, and thinking about how to calculate anlges from multiple coordinate planes was incredibly confusing and took more time than anticipated. 
