@@ -40,9 +40,10 @@ place it at the start of the maze (closer to CSIL 5) facing the goal
 # Challenges
 
 ## Relay
-- One of the main challanges with the second part of the relay was trying to incorporate new components that we havent worked with before. One of the desired obstacles was trying to get the robot to go up a ramp. We found that when we tried to teleop the robot up the ramp it wouldnt be feasible unless the robot was coming in at an angle while maintaining an accelerating velocity. Once it did make it up the ramp due to the friction difference the robot would often make it our of the sides. As a result we decided to resort to simpler relay activities like droping the baton in the basket. 
+One of the main challanges with the second part of the relay was trying to incorporate new components that we havent worked with before. One of the desired obstacles was trying to get the robot to go up a ramp. We found that when we tried to teleop the robot up the ramp it wouldnt be feasible unless the robot was coming in at an angle while maintaining an accelerating velocity. Once it did make it up the ramp due to the friction difference the robot would often make it our of the sides. As a result we decided to resort to simpler relay activities like droping the baton in the basket. 
 ## Pass the Baton 
--  
+A challeng with passing the baton included trying to get the arm to function by sending messages to th different robots. We werent able to solve this but resorted to using useer input to communicate between the robots instead. 
+
 ## Orinetation
 
 Our map was flipped in RVIZ, and thinking about how to calculate anlges from multiple coordinate planes was incredibly confusing and took more time than anticipated. 
@@ -52,14 +53,14 @@ Our map was flipped in RVIZ, and thinking about how to calculate anlges from mul
 The AMCL package did not like navigation in the maze we had previously built. The marigins of error were too small, it was afraid it would run in to things and stop navigating. To solve this, we simplified the maze. Unfortunately, the simplified maze is less interesting.
 
 # Future Work
+## Pass the Baton
+If we had more time it would haeve been intresting to explore other relay options including finding a different material for the ramp to minimizee the friction consideration.
+It also would have been intresting to try and get the messaging between the robots to work. We were given an option to explore regarding the launch file so upon more time we could have tried to figure out how to make it work. 
 
 ## Built in Navigation
 
 Given more time, we would love to not have to rely on the naviagtion system of AMCL but rather to build our own tools for navigation using robot odometry. Hopefully this would allow us to navigate through more narrow passageways.
 
-## More Tasks
-
-Given more time, I would like to contribute to adding additional elements to the relay race.
 
 # Takeaways
 
