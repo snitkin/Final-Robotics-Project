@@ -172,13 +172,13 @@ class Final:
             
             while not a_star:
                 # wait for a star to complete, run on seperate computer
-                a_star = input("Has Robot 1 completed the maze?"
+                a_star = input("Has Robot 1 completed the maze?")
             
             #move forward out of maze
             for i in range(2):
                 set_vel(self,.1,0)
                 r.sleep()
-            set_veel(self,0,0)             
+            set_vel(self,0,0)             
             #after finishing maze, lower baton
             r.sleep()
             lower(self)
