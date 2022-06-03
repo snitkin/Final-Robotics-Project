@@ -42,6 +42,11 @@ place it at the start of the maze (closer to CSIL 5) facing the goal
 - rosrun image_transport republish compressed in:=raspicam_node/image raw       out:=camera/rgb/image_raw
 - rosrun final_robotics_proect final.py ([1] or [2] or [3])
 
+
+## Final
+- on three separate computers run all necessary commands for baton pass
+- for robot 1, also run pathfinding commands after robot 1 enters maze and is in proper position
+
 # Challenges
 
 ## Relay
