@@ -72,7 +72,7 @@ class Final:
         elif robot_code == 3:
             #Done subscriber to find out when second leef is completee
             self.done_subscriber =  rospy.Subscriber('done_action',
-            done_message, self.done_callback2)
+            done_message, self.done_callback)
 
         
         else:
@@ -164,7 +164,7 @@ class Final:
                 r.sleep()
             
             #turn slightly so angled toward goal
-            set_vel(self,0, - (np.pi / 4)
+            set_vel(self,0, - (np.pi / 4))
             r.sleep()
             
             #wait for maze to be completed
@@ -184,7 +184,7 @@ class Final:
             lower(self)
 
             #publish message to done topic so robot 2 knows that first leg complete
-            done = done_message(message="done")
+            done = done_message(message="done 1")
             self.done_publisher.publish(done)
 
             print("Run Robot 2 code!\n")
@@ -211,7 +211,7 @@ class Final:
             #call done callback (ideally this would happen automatically after message published
             #however not possible given inability to run both robots on same computer
             #done callback has robot 2 move forward and grab baton
-            done = done_message(message=msg) 
+            done = done_message(message="done 1") 
             self.done_callback(done)
 
             rospy.sleep(2)
@@ -244,7 +244,7 @@ class Final:
             
             self.objective_complete = True
             #publishes that second leg done so third robot can start
-            done = done_message(message="done")
+            done = done_message(message="done 2")
             self.done_publisher.publish(done)
             
             print("Run Robot 3 code!\n")
@@ -260,10 +260,10 @@ class Final:
             msg = False
             while not msg:
                 msg = input("Has robot 2 completed task?")
-            done = done_message(message=msg2)
+            done = done_message(message="done 2")
             
             #complete third and final leg
-            self.done_callback2(done)
+            self.done_callback(done)
             
             self.objective_complete = True    
             
@@ -271,45 +271,47 @@ class Final:
     
     # Done callback, for robot 2, called when first leg is completed and must pick up baton
     def done_callback(self, msg):
-        print("done callback")
-        print(msg.message)
-        
-        # find and face orange baton
-        find_and_face_color(self, "orange")
+        if msg = "done 1" and self.robot_code == 2:
+            print("done callback")
+            print(msg.message)
 
-        # go to orange
-        drive_to_target(self)
+            # find and face orange baton
+            find_and_face_color(self, "orange")
 
-        # Pick up the baton
-        gripper_joint_goal = [-0.007, -0.007]
-        set_gripper(self, gripper_joint_goal)
+            # go to orange
+            drive_to_target(self)
 
-        # Send publish to indicate that gripping baton and robot 1 can release
-        gm = gripper_message(message="done")
-        self.gripper_publisher.publish(gm)
+            # Pick up the baton
+            gripper_joint_goal = [-0.007, -0.007]
+            set_gripper(self, gripper_joint_goal)
 
-        return
+            # Send publish to indicate that gripping baton and robot 1 can release
+            gm = gripper_message(message="done")
+            self.gripper_publisher.publish(gm)
 
-    # done callback2 for when robot 2 has completed the second leg, called by robott 3
-    def done_callback2(self,msg):
-        print("done callback2")
-        # drive foward to finish line 
-        r = rospy.Rate(2)
-        print("1")
-        #drive forward
-        for r in range(10):
-            set_vel(self, .1,0)
-            rospy.sleep(1)
-        print("2")
-        #happy dance!!!
-        for i in range(4):
-            set_vel(self,0,.35)
-            rospy.sleep(1)
-            set_vel(self,0,-.4)
-            rospy.sleep(1)
-            set_vel(self,0,0)
-        
-
+            return
+        elif msg = "done 2" and self.robot_code == 3:
+            # done callback2 for when robot 2 has completed the second leg, called by robot 3
+            print("done callback2")
+            # drive foward to finish line 
+            r = rospy.Rate(2)
+            print("1")
+            #drive forward
+            for r in range(10):
+                set_vel(self, .1,0)
+                rospy.sleep(1)
+            print("2")
+            #happy dance!!!
+            for i in range(4):
+                set_vel(self,0,.35)
+                rospy.sleep(1)
+                set_vel(self,0,-.4)
+                rospy.sleep(1)
+                set_vel(self,0,0)
+   
+        else:
+            print("error: not valid done message")
+            
     # Gripper callback to coordinate baton eexchange
     def gripper_callback(self, msg):
         
