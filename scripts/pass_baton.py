@@ -271,7 +271,7 @@ class Final:
     
     # Done callback, for robot 2, called when first leg is completed and must pick up baton
     def done_callback(self, msg):
-        if msg = "done 1" and self.robot_code == 2:
+        if msg == "done 1" and self.robot_code == 2:
             print("done callback")
             print(msg.message)
 
@@ -290,7 +290,7 @@ class Final:
             self.gripper_publisher.publish(gm)
 
             return
-        elif msg = "done 2" and self.robot_code == 3:
+        elif msg == "done 2" and self.robot_code == 3:
             # done callback2 for when robot 2 has completed the second leg, called by robot 3
             print("done callback2")
             # drive foward to finish line 
