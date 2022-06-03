@@ -24,8 +24,8 @@ path_prefix = os.path.dirname(__file__) + "/action_states/"
 
 class Final:
 
-    # Make sure you're running with an int afterwards (1 or 2)
-    # rosrun final_robotics_project final.py <1 or 2>
+    # Make sure you're running with an int afterwards (1 or 2 or 3)
+    # rosrun final_robotics_project pass_baton.py <1 or 2>
     def __init__(self, robot_code):
         self.objective_complete = False
         self.objective_complete2 = False  
@@ -55,31 +55,28 @@ class Final:
 
         # Publishers and subscribers
         if robot_code == 1:
-            # Done publisher
+            # Done publisher to publish when first leg completee
             self.done_publisher = rospy.Publisher('done_action', 
             done_message)
 
         elif robot_code == 2:
-            # Done subscriber
+            # Done subscriber to find out when first leg complete
             self.done_subscriber =  rospy.Subscriber('done_action',
             done_message, self.done_callback)
             self.secured_baton = False
 
-            #self.done_subscriber =  rospy.Subscriber('done_action',
-            #done_message, self.line_callback)
-            #self.objective_complete2 = False
-
-            #Done Publisher
+            #Done Publisher to publish when second lefe complete
             self.done_publisher = rospy.Publisher('done_action', 
             done_message)
 
         elif robot_code == 3:
+            #Done subscriber to find out when second leef is completee
             self.done_subscriber =  rospy.Subscriber('done_action',
             done_message, self.done_callback2)
 
         
         else:
-            print("Robot code error: Must be 1 or 2")
+            print("Robot code error: Must be 1 or 2 or 3")
             return
 
 
@@ -126,55 +123,183 @@ class Final:
             print("waiting for init")
         else:
             print("intialized")
-            self.do_actions()
+            self.do_actions()     
+    
+    #image callback function
+    def image_callback(self, msg):
+        # converts the incoming ROS message to OpenCV format and HSV (hue, saturation, value)
+        self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
+        self.image_init = True
 
-    # Done callback, for robot 2
+    #laser scan callback function
+    def laser_scan(self, data):
+        scan = np.array(data.ranges)
+        #if value is 0, set to 60 because that's outside of range
+        scan[scan == 0] = 60
+        self.scan = scan
+
+    # Helper function to cancel movement and arm angles
+    def reset(self):
+        set_vel(self, 0,0)
+        set_gripper(self, [0,0])
+        set_arm(self, [0,0,0,0])
+        
+    #main function to control actions for each robot
+    def do_actions(self):
+        #stop moving and reset arm and gripper
+        self.reset()
+
+        if self.robot_code == 1:
+
+            self.min_arm_distance = 0.22
+            
+            #Goes to baton and picks up
+            drive_to_target(self)
+            grip_and_lift(self)
+            
+            #wait for maze to be completed
+            a_star = False
+            
+            while not a_star:
+                # Do the a star
+                i = 1
+            
+            #after finishing maze, lower baton
+            rospy.sleep(1)
+            lower(self)
+
+            #publish message to done topic so robot 2 knows that first leg complete
+            done = done_message(message="done")
+            self.done_publisher.publish(done)
+
+            print("Run Robot 2 code!\n")
+
+            self.objective_complete = True
+            
+            # Wait for the other robot to grab the baton
+            msg = False
+            while not msg:
+                msg = input("Has Robot 2 grabbed the baton?")
+
+            #release baton and back up
+            gripper_joint_goal = [0.018, 0.018]
+            set_gripper(self, gripper_joint_goal)
+            rospy.sleep(1)
+            back_up(self)
+
+            print("Robot 2 is good to lift")
+
+        elif self.robot_code == 2:
+
+            msg = input("Has Robot 1 lowered the baton?")
+
+            #call done callback (ideally this would happen automatically after message published
+            #however not possible given inability to run both robots on same computer
+            #done callback has robot 2 move forward and grab baton
+            done = done_message(message=msg) 
+            self.done_callback(done)
+
+            rospy.sleep(2)
+            
+            # wait for robot 1 to release baton and back away
+            msg1 = False
+            while not msg1:
+                msg1 = input("Has robot 1 backed up?")
+            
+            #call gripper callback (ideally this would also happen automatically) 
+            #gripper callback lifts up baton 
+            done1 = gripper_message(message=msg1)
+            self.gripper_callback(done1)
+
+            rospy.sleep(2)
+
+            #after lifting up baton, move onto second task: driving to baskt
+            print("driving to basket")
+            drive_to_basket(self)
+            rospy.sleep(1)
+            
+            print("dropping in basket")
+            lower(self)
+            gripper_joint_goal = [0.018, 0.018]
+            set_gripper(self, gripper_joint_goal)
+            rospy.sleep(1)
+
+            
+            set_vel(self,0,0)
+            
+            self.objective_complete = True
+            #publishes that its done so third robot can start
+            done = done_message(message="done")
+            self.done_publisher.publish(done)
+            
+            print("Run Robot 3 code!\n")
+
+            #self.objective_complete after this
+            self.objective_complete = True
+            
+
+        
+        elif self.robot_code == 3:
+
+            #wait for robot 2 to complete second leg
+            msg = False
+            while not msg:
+                msg = input("Has robot 2 completed task?")
+            done = done_message(message=msg2)
+            
+            #complete third lef
+            self.done_callback2(done)
+            
+            self.objective_complete = True
+            
+            
+        return True
+    
+    # Done callback, for robot 2, called when first leg is completed and must pick up baton
     def done_callback(self, msg):
-        # Go and find the color
         print("done callback")
         print(msg.message)
         
-        # find and face orange
+        # find and face orange baton
         find_and_face_color(self, "orange")
 
         # go to orange
         drive_to_target(self)
 
-
         # Pick up the baton
         gripper_joint_goal = [-0.007, -0.007]
         set_gripper(self, gripper_joint_goal)
 
-        # Send publish
+        # Send publish to indicate that gripping baton and robot 1 can release
         gm = gripper_message(message="done")
         self.gripper_publisher.publish(gm)
 
         return
 
+    # done callback2 for when robot 2 has completed the second leg, called by robott 3
     def done_callback2(self,msg):
         print("done callback2")
-        #will drive foward to finish line 
+        # drive foward to finish line 
         r = rospy.Rate(2)
         print("1")
+        #drive forward
         for r in range(10):
             set_vel(self, .1,0)
             rospy.sleep(1)
-            #will do a little happy dance
         print("2")
+        #happy dance!!!
         for i in range(4):
             set_vel(self,0,.35)
             rospy.sleep(1)
             set_vel(self,0,-.4)
             rospy.sleep(1)
             set_vel(self,0,0)
-
-
         
 
-    # Gripper callback, for robot 1
+    # Gripper callback to coordinate baton eexchange
     def gripper_callback(self, msg):
         
-        # If code == 1 then let go, back up 
+        # for robot 1, called after robot 2 has grabbed baton so robot 1 must releease and backup
         if self.robot_code == 1:
             print("gripper callback 1")
             print(msg.message)
@@ -189,162 +314,22 @@ class Final:
             gm = gripper_message(message="done")
             self.gripper_publisher.publish(gm)
 
-        # If code == 2 - 1 has let go, lift
-        else:
+        # for robot 2, called after robot 1 has released baton so must lift baton up
+        elif self.robot_code == 2:
             print("gripper callback 2")
             grip_and_lift(self)
             self.secured_baton = True
-            print("starting robot 3")     
-            #after it has the baton it finds line and drops baton in a basket
-        
+
+            #after lifting baton, robot 2 turns around from first robot
             r = rospy.Rate(3)
             for r in range(10):
                 set_vel(self,0,.9)
             print("done turning")
             rospy.sleep(1)
             
-            #find_and_face_line(self, "orange")
-            
-        
-            #how does the robot know its done with line follower?? figure that out
-            
-            #msg2 = False
-            #while not msg2:
-            #    msg2 = input("Has line follower finished")
-            
-            print("driving to basket")
-            drive_to_basket(self)
-            rospy.sleep(1)
-            print("dropping in basket")
-            lower(self)
-            gripper_joint_goal = [0.018, 0.018]
-            set_gripper(self, gripper_joint_goal)
-            rospy.sleep(1)
-
-            set_vel(self,0,0)
-            #publishes that its done
-            done = done_message(message="done")
-            self.done_publisher.publish(done)
  
-
-            print("im here")
         return
-
-    #image callback function
-    def image_callback(self, msg):
-        # converts the incoming ROS message to OpenCV format and HSV (hue, saturation, value)
-        self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
-        self.image_init = True
-
-    #laser scan callback function
-    def laser_scan(self, data):
-        scan = np.array(data.ranges)
-        #if value is 0, set to 60 because that's outside of range
-        scan[scan == 0] = 60
-        self.scan = scan
-
-# Helper function to cancel movement and arm angles
-    def reset(self):
-        set_vel(self, 0,0)
-        set_gripper(self, [0,0])
-        set_arm(self, [0,0,0,0])
-
     
-    def do_actions(self):
-
-        self.reset()
-
-        if self.robot_code == 1:
-
-            self.min_arm_distance = 0.22
-
-         #Goes to and picks up baton
-            drive_to_target(self)
-
-            grip_and_lift(self)
-            
-            a_star = False
-            
-            while not a_star:
-                # Do the a star
-                i = 1
-            
-            rospy.sleep(1)
-            lower(self)
-
-            done = done_message(message="done")
-            self.done_publisher.publish(done)
-
-            print("Run Robot 2 code!\n")
-
-            s = input("Has Robot 2 grabbed the baton?")
-
-            self.objective_complete = True
-            
-            # Wait for the other robot to grab the baton
-            while not self.objective_complete:
-                i = 1
-
-            gripper_joint_goal = [0.018, 0.018]
-            set_gripper(self, gripper_joint_goal)
-            rospy.sleep(1)
-            back_up(self)
-
-            print("Robot 2 is good to lift")
-
-        elif self.robot_code == 2:
-
-            msg = input("Has Robot 1 lowered the baton?")
-
-            done = done_message(message=msg)
-            self.done_callback(done)
-
-            rospy.sleep(2)
-            
-            # by the time we exit this loop, 2 has the baton over its head
-            msg1 = False
-            while not msg1:
-                msg1 = input("Has robot 1 backed up?")
-                
-            done1 = gripper_message(message=msg1)
-            self.gripper_callback(done1)
-
-            rospy.sleep(2)
-
-            #self.objective_complete after this
-            self.objective_complete = True
-
-            while not self.objective_complete:
-                i = 1
-
-            #print("welp")
-            #msg2 = False
-            while not msg2:
-                msg2 = input("does robot need this")
-            done2 = line_message(message=msg2)
-            self.line_callback(done2)
-            
-
-
-            print("Run Robot 3 code!\n")
-        
-        elif self.robot_code == 3:
-
-            msg2 = input("Has Robot 2 lowered the baton into the basket?")
-
-            done = done_message(message=msg2)
-            self.done_callback2(done)
-            print("get here")
-            #rospy.sleep(2)
-            
-            #not sure if i need this
-            self.objective_complete = True
-
-            while not self.objective_complete:
-                i = 1
-            
-            
-        return True
 
     def run(self):
         rospy.spin()
