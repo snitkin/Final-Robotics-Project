@@ -157,15 +157,30 @@ class Final:
             drive_to_target(self)
             grip_and_lift(self)
             
+            r = rospy.Rate(1)
+            #move forward into maze
+            for i in range(2):
+                set_vel(self,.1,0)
+                r.sleep()
+            
+            #turn slightly so angled toward goal
+            set_vel(self,0, - (np.pi / 4)
+            r.sleep()
+            
             #wait for maze to be completed
             a_star = False
             
             while not a_star:
-                # Do the a star
-                i = 1
+                # wait for a star to complete, run on seperate computer
+                a_star = input("Has Robot 1 completed the maze?"
             
+            #move forward out of maze
+            for i in range(2):
+                set_vel(self,.1,0)
+                r.sleep()
+            set_veel(self,0,0)             
             #after finishing maze, lower baton
-            rospy.sleep(1)
+            r.sleep()
             lower(self)
 
             #publish message to done topic so robot 2 knows that first leg complete
@@ -207,13 +222,13 @@ class Final:
                 msg1 = input("Has robot 1 backed up?")
             
             #call gripper callback (ideally this would also happen automatically) 
-            #gripper callback lifts up baton 
+            #gripper callback lifts up baton after robot 1 has released
             done1 = gripper_message(message=msg1)
             self.gripper_callback(done1)
 
             rospy.sleep(2)
-
-            #after lifting up baton, move onto second task: driving to baskt
+     
+            #after lifting up baton, and repostioning move onto second task: driving to basket
             print("driving to basket")
             drive_to_basket(self)
             rospy.sleep(1)
@@ -228,7 +243,7 @@ class Final:
             set_vel(self,0,0)
             
             self.objective_complete = True
-            #publishes that its done so third robot can start
+            #publishes that second leg done so third robot can start
             done = done_message(message="done")
             self.done_publisher.publish(done)
             
@@ -247,11 +262,10 @@ class Final:
                 msg = input("Has robot 2 completed task?")
             done = done_message(message=msg2)
             
-            #complete third lef
+            #complete third and final leg
             self.done_callback2(done)
             
-            self.objective_complete = True
-            
+            self.objective_complete = True    
             
         return True
     
@@ -321,13 +335,16 @@ class Final:
             self.secured_baton = True
 
             #after lifting baton, robot 2 turns around from first robot
-            r = rospy.Rate(3)
-            for r in range(10):
-                set_vel(self,0,.9)
+            r = rospy.Rate(1)
+            for r in range(2):
+                set_vel(self,0,(np.pi / 2))
+                r.sleep()
             print("done turning")
-            rospy.sleep(1)
             
- 
+            #move forward away from maze
+            for i in range(2):
+                set_vel(self,.1,0)
+                r.sleep()
         return
     
 
