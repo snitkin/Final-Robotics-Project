@@ -8,6 +8,9 @@ The goal of this project is to have the robot complete a relay race. This projec
 
 Link to video demo:
 [video](https://drive.google.com/file/d/1eA4pDETtZJvgu-7c6HNZG-yaTawgXvTW/view?usp=sharing)
+
+Gif:
+
 ![gif](https://github.com/snitkin/Final-Robotics-Project/blob/b13ae6a7a652c7ea174794ceef793f2b673d556c/FinalProject.gif)
 
 # System Architecture
