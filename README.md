@@ -7,7 +7,8 @@ Code is in algo.py and final.py.  We reused a lot of our code from Q Learning, b
 The goal of this project is to have the robot complete a relay race. This project incorporates many of the different algorithms and topics that we learned throughout the quarter. Due to this, we thought it would be a good way to tie what we have learned into a single project in a fun and visual way. The first main component of this project is to incoporate A* path finding algorithm to have the robot sucessfully navigate through a maze with a baton in hand. Once the robot makes it out of the maze it will have to pass the baton to another robot that meets it at the exit of the maze. Using user input the robots communicate with eachother to pass the baton. The second robot with the baton in hand will continue the relay, following along a line until it reaches the end and activates a third robot that will make it to the finish line. 
 
 Link to video demo:
-[link](https://drive.google.com/file/d/1eA4pDETtZJvgu-7c6HNZG-yaTawgXvTW/view?usp=sharing)
+[video](https://drive.google.com/file/d/1eA4pDETtZJvgu-7c6HNZG-yaTawgXvTW/view?usp=sharing)
+![gif](https://github.com/snitkin/Final-Robotics-Project/blob/b13ae6a7a652c7ea174794ceef793f2b673d556c/FinalProject.gif)
 
 # System Architecture
 ## Path Finding
